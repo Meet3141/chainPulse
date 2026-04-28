@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+networkx
+google-generativeai
+pydantic
+python-dotenv
+websockets
+httpx
+firebase-admin
