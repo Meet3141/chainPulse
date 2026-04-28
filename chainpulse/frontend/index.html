@@ -130,7 +130,7 @@ body:not(.light-mode) .leaflet-popup-content-wrapper {box-shadow: 0 8px 30px rgb
 .plane-icon {
   font-size: 24px;
   filter: drop-shadow(0 0 5px rgba(16,185,129,0.8));
-  transition: transform 0.1s;
+  transition: transform 0.1s linear; /* Smooth micro-stutters out */
 }
 </style>
 </head>
@@ -250,8 +250,8 @@ function updateStats(sh){
 function animatePlaneOnPath(pathNodes) {
   if (pathNodes.length < 2) return;
   const planeIcon = L.divIcon({
-    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#10b981" width="24px" height="24px" style="filter: drop-shadow(0 0 8px #10b981);"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></svg>`,
-    className: 'plane-marker',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#10b981" width="24px" height="24px" style="filter: drop-shadow(0 0 8px #10b981); transition: transform 0.3s ease;"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></svg>`,
+    className: 'plane-icon',
     iconSize: [24, 24],
     iconAnchor: [12, 12]
   });
@@ -261,9 +261,14 @@ function animatePlaneOnPath(pathNodes) {
 
   let currentSegment = 0;
   let progress = 0;
-  const speed = 0.005; // Speed multiplier
+  const speed = 4.0; // Distance units per second
+  let lastTime = performance.now();
 
-  function frame() {
+  function frame(time) {
+    let dt = (time - lastTime) / 1000;
+    lastTime = time;
+    if (dt > 0.1) dt = 0.016; // Prevent huge jumps if tab was inactive
+
     if (currentSegment >= pathNodes.length - 1) {
       currentSegment = 0;
       progress = 0;
@@ -272,13 +277,14 @@ function animatePlaneOnPath(pathNodes) {
 
     const p1 = nodeCoords[pathNodes[currentSegment]];
     const p2 = nodeCoords[pathNodes[currentSegment + 1]];
+    if (!p1 || !p2) return;
     
     const dx = p2.lng - p1.lng;
     const dy = p2.lat - p1.lat;
     const dist = Math.sqrt(dx*dx + dy*dy);
     
-    // Step size depends on distance to maintain constant speed
-    const step = speed / Math.max(dist, 0.001);
+    // Constant speed regardless of framerate or segment length
+    const step = (speed * dt) / Math.max(dist, 0.001);
     progress += step;
 
     if (progress >= 1) {
@@ -293,7 +299,6 @@ function animatePlaneOnPath(pathNodes) {
       const angle = Math.atan2(dy, dx) * 180 / Math.PI;
       const el = marker.getElement()?.querySelector('svg');
       if (el) {
-        // The SVG is pointing UP, so we rotate by angle + 90
         el.style.transform = `rotate(${angle + 90}deg)`;
       }
     }

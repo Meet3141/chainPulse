@@ -39,9 +39,9 @@ edit the `BACKEND` const in the script.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    FRONTEND (React/HTML)                 │
+│                    FRONTEND (Vanilla JS/HTML)            │
 │  ┌──────────────┐  ┌──────────────────────────────────┐ │
-│  │ Control Panel │  │   Cytoscape.js Graph (10 nodes)  │ │
+│  │ Control Panel │  │   Leaflet.js Map (Geographic)    │ │
 │  │ • Disrupt btn │  │   • Green/Red/Orange/Blue nodes  │ │
 │  │ • Severity    │  │   • Animated edge rerouting      │ │
 │  │ • Auto-toggle │  │   • Real-time WebSocket updates  │ │
@@ -106,13 +106,10 @@ Interactive docs: http://localhost:8080/docs
 
 ## Deployment
 
-```bash
-export GEMINI_API_KEY=your_key
-export PROJECT_ID=your_gcp_project
-bash deploy.sh
-```
+- **Frontend:** Deployed on **Vercel**
+- **Backend:** Deployed on **Google Cloud Run** (or Render)
 
-See [deploy.sh](./deploy.sh) for full deployment to Cloud Run + Firebase.
+See [deploy.sh](./deploy.sh) for backend deployment instructions to Cloud Run.
 
 ---
 
@@ -120,12 +117,12 @@ See [deploy.sh](./deploy.sh) for full deployment to Cloud Run + Firebase.
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | HTML + Cytoscape.js + Tailwind CSS |
+| Frontend | HTML + Leaflet.js + Vanilla CSS (Glassmorphism) |
 | Backend | Python FastAPI |
 | Graph Engine | NetworkX (in-memory) |
 | AI | Gemini 1.5 Flash |
 | Real-Time | WebSocket |
-| Deploy | Cloud Run + Firebase Hosting |
+| Deploy | Vercel (Frontend) + Google Cloud Run (Backend) |
 
 ---
 
