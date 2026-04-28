@@ -1,502 +1,1011 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChainPulse — Supply Chain Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>
-:root {
-  --bg: #06080f;
-  --panel: #0d1221;
-  --panel2: #111827;
-  --border: rgba(56,189,248,0.08);
-  --accent: #06b6d4;
-  --accent2: #818cf8;
-  --danger: #f43f5e;
-  --success: #10b981;
-  --warn: #f59e0b;
-  --text: #f0f4ff;
-  --muted: #7c8db5;
-  --glass: rgba(13,18,33,0.85);
-}
-body.light-mode {
-  --bg: #f8fafc;
-  --panel: #ffffff;
-  --panel2: #f1f5f9;
-  --border: rgba(15,23,42,0.1);
-  --accent: #0ea5e9;
-  --accent2: #6366f1;
-  --danger: #e11d48;
-  --success: #059669;
-  --warn: #d97706;
-  --text: #0f172a;
-  --muted: #64748b;
-  --glass: rgba(255,255,255,0.85);
-}
-* {margin: 0; padding: 0; box-sizing: border-box;}
-body {font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; transition: background 0.3s, color 0.3s;}
-.app {display: flex; height: 100vh;}
-.left {width: 38%; min-width: 370px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; backdrop-filter: blur(20px); transition: background 0.3s, border-color 0.3s;}
-.left::-webkit-scrollbar {width: 4px;} 
-.left::-webkit-scrollbar-thumb {background: var(--accent); border-radius: 4px;}
-.right {flex: 1; position: relative; background: var(--bg); transition: background 0.3s;}
-#map {width: 100%; height: 100%; z-index: 1;}
-
-.header {padding: 24px 28px 20px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(6,182,212,0.06) 0%, transparent 100%); position: relative;}
-.theme-toggle {position: absolute; right: 28px; top: 24px; background: rgba(129,140,248,0.1); border: 1px solid rgba(129,140,248,0.2); color: var(--accent2); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s;}
-.theme-toggle:hover {background: rgba(129,140,248,0.2);}
-
-.logo-row {display: flex; align-items: center; gap: 12px;}
-.logo-icon {width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(6,182,212,0.3);}
-.logo-text {font-size: 26px; font-weight: 900; letter-spacing: -0.5px; background: linear-gradient(135deg, #06b6d4, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-.tagline {font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500;}
-.stats-bar {display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;}
-.stat {font-size: 11px; padding: 5px 12px; border-radius: 20px; font-weight: 700; backdrop-filter: blur(8px); border: 1px solid;}
-.stat.live {background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.3); animation: glow-pulse 2s infinite;}
-.stat.active-s {background: rgba(6,182,212,0.1); color: var(--accent); border-color: rgba(6,182,212,0.2);}
-.stat.risk {background: rgba(244,63,94,0.1); color: var(--danger); border-color: rgba(244,63,94,0.3);}
-.stat.rerouted-s {background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.2);}
-@keyframes glow-pulse {0%, 100% {box-shadow: 0 0 8px rgba(16,185,129,0.3);} 50% {box-shadow: 0 0 16px rgba(16,185,129,0.6);}}
-
-.section {padding: 20px 28px; border-bottom: 1px solid var(--border);}
-.section-title {font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px;}
-label {display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
-select {width: 100%; padding: 10px 14px; background: var(--bg); border: 1px solid rgba(129,140,248,0.15); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 500; margin-bottom: 14px; outline: none; transition: border .2s; appearance: none; cursor: pointer;}
-select:focus {border-color: var(--accent); box-shadow: 0 0 0 3px rgba(6,182,212,0.1);}
-input[type=range] {width: 100%; height: 5px; -webkit-appearance: none; appearance: none; border: none; border-radius: 3px; background: linear-gradient(90deg, var(--success), var(--warn), var(--danger)); cursor: pointer; margin-bottom: 14px;}
-input[type=range]::-webkit-slider-thumb {-webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); cursor: pointer; box-shadow: 0 0 10px rgba(6,182,212,0.5);}
-
-.btn-row {display: flex; gap: 10px;}
-.btn {flex: 1; padding: 12px 16px; border: none; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; transition: all .25s; text-transform: uppercase; letter-spacing: 0.5px;}
-.btn-disrupt {background: linear-gradient(135deg, #f43f5e, #e11d48); color: #fff; box-shadow: 0 4px 15px rgba(244,63,94,0.25);}
-.btn-disrupt:hover {transform: translateY(-2px); box-shadow: 0 8px 25px rgba(244,63,94,0.4);}
-.btn-reset {background: rgba(129,140,248,0.1); color: var(--accent2); border: 1px solid rgba(129,140,248,0.2);}
-.btn-reset:hover {background: rgba(129,140,248,0.2);}
-.btn-reroute {background: linear-gradient(135deg, #10b981, #059669); color: #fff; box-shadow: 0 4px 15px rgba(16,185,129,0.25);}
-.btn-reroute:hover {transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16,185,129,0.4);}
-
-.card {border-radius: 14px; padding: 18px; margin-bottom: 14px; animation: slideIn .4s cubic-bezier(.4,0,.2,1); backdrop-filter: blur(12px);}
-@keyframes slideIn {from {opacity: 0; transform: translateY(16px);} to {opacity: 1; transform: translateY(0);}}
-.card-disruption {background: linear-gradient(135deg, rgba(244,63,94,0.12), rgba(190,18,60,0.08)); border: 1px solid rgba(244,63,94,0.3); box-shadow: 0 0 30px rgba(244,63,94,0.08);}
-.card-resolution {background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.08)); border: 1px solid rgba(16,185,129,0.3); box-shadow: 0 0 30px rgba(16,185,129,0.08);}
-.card-header {font-size: 15px; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.3px;}
-.exposure {font-size: 32px; font-weight: 900; margin: 10px 0; letter-spacing: -1px;}
-.exposure.red {color: var(--danger); text-shadow: 0 0 30px rgba(244,63,94,0.4);}
-.exposure.green {color: var(--success); text-shadow: 0 0 30px rgba(16,185,129,0.4);}
-.detail {font-size: 13px; color: var(--muted); margin: 5px 0; font-weight: 500;}
-.detail strong {color: var(--text);}
-.opts {display: flex; gap: 10px; margin: 14px 0;}
-.opt-card {flex: 1; background: rgba(6,8,15,0.05); border-radius: 10px; padding: 14px; border: 1px solid rgba(129,140,248,0.1); cursor: pointer; transition: all .25s;}
-body:not(.light-mode) .opt-card {background: rgba(6,8,15,0.6);}
-.opt-card:hover {border-color: var(--accent); box-shadow: 0 0 20px rgba(6,182,212,0.1); transform: translateY(-2px);}
-.opt-card h4 {font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
-.opt-card p {font-size: 12px; color: var(--muted); margin: 3px 0; font-weight: 500;}
-
-.brief-panel {background: linear-gradient(135deg, rgba(129,140,248,0.1), rgba(99,102,241,0.06)); border: 1px solid rgba(129,140,248,0.2); border-radius: 14px; padding: 18px; margin-top: 14px; box-shadow: 0 0 30px rgba(129,140,248,0.05);}
-.brief-label {font-size: 11px; font-weight: 800; color: var(--accent2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1.5px;}
-.brief-text {font-size: 13px; font-style: italic; color: var(--accent2); line-height: 1.7; font-weight: 500;}
-body:not(.light-mode) .brief-text {color: #c7d2fe; font-weight: 400;}
-
-.spinner {display: inline-block; width: 14px; height: 14px; border: 2px solid var(--accent2); border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite;}
-@keyframes spin {to {transform: rotate(360deg);}}
-.toggle-row {display: flex; align-items: center; gap: 12px; padding: 14px 28px; border-bottom: 1px solid var(--border); background: linear-gradient(90deg, rgba(129,140,248,0.04), transparent);}
-.toggle-label {font-size: 12px; font-weight: 700; color: var(--text);}
-.toggle {position: relative; width: 46px; height: 24px; cursor: pointer;}
-.toggle input {opacity: 0; width: 0; height: 0;}
-.toggle-slider {position: absolute; inset: 0; background: rgba(129,140,248,0.15); border-radius: 12px; transition: .3s; border: 1px solid rgba(129,140,248,0.2);}
-.toggle-slider:before {content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 2px; background: #fff; border-radius: 50%; transition: .3s;}
-.toggle input:checked + .toggle-slider {background: var(--accent); border-color: var(--accent); box-shadow: 0 0 12px rgba(6,182,212,0.4);}
-.toggle input:checked + .toggle-slider:before {transform: translateX(21px);}
-.auto-badge {font-size: 10px; padding: 3px 10px; border-radius: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;}
-.badge-off {background: rgba(129,140,248,0.1); color: var(--accent2); border: 1px solid rgba(129,140,248,0.2);}
-.badge-on {background: rgba(6,182,212,0.15); color: var(--accent); border: 1px solid rgba(6,182,212,0.3); box-shadow: 0 0 12px rgba(6,182,212,0.2);}
-
-.ws-status {position: fixed; top: 12px; right: 12px; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 1000; backdrop-filter: blur(8px); letter-spacing: 0.5px;}
-.ws-connected {background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3);}
-.ws-disconnected {background: rgba(244,63,94,0.15); color: var(--danger); border: 1px solid rgba(244,63,94,0.3); animation: glow-pulse-red 1.5s infinite;}
-@keyframes glow-pulse-red {0%, 100% {box-shadow: 0 0 8px rgba(244,63,94,0.2);} 50% {box-shadow: 0 0 16px rgba(244,63,94,0.5);}}
-#cards-container {padding: 18px 28px;}
-
-/* Map popups styling */
-.leaflet-popup-content-wrapper {background: var(--panel)!important; color: var(--text)!important; border-radius: 12px!important; border: 1px solid var(--border)!important; box-shadow: 0 8px 30px rgba(0,0,0,0.15)!important;}
-body:not(.light-mode) .leaflet-popup-content-wrapper {box-shadow: 0 8px 30px rgba(0,0,0,0.5)!important;}
-.leaflet-popup-tip {background: var(--panel)!important;}
-.leaflet-popup-content {font-family: Inter, sans-serif!important; font-size: 12px!important; margin: 10px 14px!important;}
-
-/* Plane Animation element */
-.plane-icon {
-  font-size: 24px;
-  filter: drop-shadow(0 0 5px rgba(16,185,129,0.8));
-  transition: transform 0.1s linear; /* Smooth micro-stutters out */
-}
-</style>
-</head>
-<body>
-<div class="app">
-<div class="left">
-  <div class="header">
-    <div class="logo-row">
-      <div class="logo-icon">⚡</div>
-      <div class="logo-text">ChainPulse</div>
-    </div>
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">☀️ Light Mode</button>
-    <div class="tagline">Predictive Disruption Intelligence</div>
-    <div class="stats-bar">
-      <span class="stat live">● LIVE</span>
-      <span class="stat active-s" id="stat-active">20 active</span>
-      <span class="stat risk" id="stat-risk">0 at risk</span>
-      <span class="stat rerouted-s" id="stat-rerouted">0 rerouted</span>
-    </div>
-  </div>
-  <div class="toggle-row">
-    <span style="font-size:16px">⚡</span>
-    <span class="toggle-label">Auto-Execute</span>
-    <label class="toggle"><input type="checkbox" id="auto-toggle"><span class="toggle-slider"></span></label>
-    <span class="auto-badge badge-off" id="auto-badge">OFF</span>
-  </div>
-  <div class="section">
-    <div class="section-title">Simulate Disruption</div>
-    <label>Target Node</label>
-    <select id="node-select"></select>
-    <label>Event Type</label>
-    <select id="event-select">
-      <option>Cyclone Alert</option>
-      <option>Port Congestion</option>
-      <option>Labour Strike</option>
-      <option>Customs Hold</option>
-      <option>Equipment Failure</option>
-    </select>
-    <label>Severity: <span id="sev-val" style="color:var(--accent);font-weight:800">80%</span></label>
-    <input type="range" id="severity" min="0" max="100" value="80">
-    <div class="btn-row">
-      <button class="btn btn-disrupt" id="btn-disrupt" onclick="triggerDisrupt()">🔴 Trigger Disruption</button>
-      <button class="btn btn-reset" onclick="triggerReset()">↻ Reset</button>
-    </div>
-  </div>
-  <div id="cards-container"></div>
-</div>
-<div class="right"><div id="map"></div></div>
-</div>
-<div class="ws-status ws-disconnected" id="ws-status">● CONNECTING</div>
-<script>
-// Toggle Theme Logic
-function toggleTheme() {
-  const isLight = document.body.classList.toggle('light-mode');
-  const btn = document.getElementById('theme-toggle');
-  if(isLight) {
-    btn.innerHTML = '🌙 Dark Mode';
-    if(tileLayer) tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
-  } else {
-    btn.innerHTML = '☀️ Light Mode';
-    if(tileLayer) tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
-  }
-}
-
-const BACKEND=window.location.hostname==='127.0.0.1'||window.location.hostname==='localhost'?'http://localhost:8080':(window.BACKEND_URL||'http://localhost:8080');
-let map, markersMap={}, edgeLines=[], rerouteLines=[], planes=[], nodeCoords={}, lastDisruptResult=null, rerouteExecuted=false, blinkInterval=null, animationFrames=[], ws;
-const SC={normal:'#10b981',disrupted:'#f43f5e',at_risk:'#f59e0b',rerouted:'#06b6d4'};
-const EC={normal:'#64748b',disrupted:'#f43f5e',at_risk:'#f59e0b',rerouted:'#10b981'};
-
-map=L.map('map',{zoomControl:true,attributionControl:false}).setView([18,65],4);
-let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(map);
-
-function createNodeMarker(n){
-  const c=SC[n.status]||'#10b981', r=7+(n.shipment_count||0)*1.5;
-  const m=L.circleMarker([n.lat,n.lng],{radius:Math.min(r,24),fillColor:c,fillOpacity:0.9,color:'#fff',weight:2}).addTo(map);
-  const tt=L.tooltip({permanent:true,direction:'bottom',offset:[0,10]});
-  tt.setContent(`<span style="font-family:Inter;font-size:10px;font-weight:700;background:rgba(6,8,15,0.85);color:#fff;padding:4px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.2)">${n.label}</span>`);
-  m.bindTooltip(tt);
-  m.bindPopup(`<strong style="color:var(--accent)">${n.label}</strong><br>Type: ${n.type}<br>📦 ${n.shipment_count} shipments<br><span style="color:${c}">● ${n.status}</span>`);
-  markersMap[n.id]=m;
-  nodeCoords[n.id]={lat:n.lat,lng:n.lng};
-}
-
-function drawEdges(edges){
-  edgeLines.forEach(l=>map.removeLayer(l));
-  edgeLines=[];
-  edges.forEach(e=>{
-    const s=nodeCoords[e.source], t=nodeCoords[e.target];
-    if(!s||!t) return;
-    const c=EC[e.status]||'#64748b';
-    const l=L.polyline([[s.lat,s.lng],[t.lat,t.lng]],{
-      color:c, weight:e.status==='rerouted'?4:2.5, opacity:e.status==='disrupted'?0.35:0.7,
-      dashArray:e.status==='disrupted'?'8 6':null, smoothFactor:1
-    }).addTo(map);
-    l._edgeId=e.source+'_'+e.target;
-    edgeLines.push(l);
-  });
-}
-
-function updateMarkers(nodes){
-  nodes.forEach(n=>{
-    nodeCoords[n.id]={lat:n.lat,lng:n.lng};
-    const m=markersMap[n.id];
-    if(!m){createNodeMarker(n); return;}
-    m.setStyle({fillColor:SC[n.status]||'#10b981',radius:Math.min(7+(n.shipment_count||0)*1.5,24)});
-  });
-}
-
-function updateStats(sh){
-  if(!sh) return;
-  const a=sh.filter(s=>s.status==='active').length, r=sh.filter(s=>s.status==='at_risk').length, t=sh.filter(s=>s.status==='rerouted').length;
-  document.getElementById('stat-active').textContent=a+' active';
-  document.getElementById('stat-risk').textContent=r+' at risk';
-  document.getElementById('stat-rerouted').textContent=t+' rerouted';
-}
-
-function animatePlaneOnPath(pathNodes) {
-  if (pathNodes.length < 2) return;
-  const planeIcon = L.divIcon({
-    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#10b981" width="24px" height="24px" style="filter: drop-shadow(0 0 8px #10b981); transition: transform 0.3s ease;"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></svg>`,
-    className: 'plane-icon',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
-  });
-  
-  const marker = L.marker([nodeCoords[pathNodes[0]].lat, nodeCoords[pathNodes[0]].lng], {icon: planeIcon, zIndexOffset: 1000}).addTo(map);
-  planes.push(marker);
-
-  let currentSegment = 0;
-  let progress = 0;
-  const speed = 4.0; // Distance units per second
-  let lastTime = performance.now();
-
-  function frame(time) {
-    let dt = (time - lastTime) / 1000;
-    lastTime = time;
-    if (dt > 0.1) dt = 0.016; // Prevent huge jumps if tab was inactive
-
-    if (currentSegment >= pathNodes.length - 1) {
-      currentSegment = 0;
-      progress = 0;
-      marker.setLatLng([nodeCoords[pathNodes[0]].lat, nodeCoords[pathNodes[0]].lng]);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChainPulse — Supply Chain Intelligence</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --bg: #06080f;
+      --panel: #0d1221;
+      --panel2: #111827;
+      --border: rgba(56, 189, 248, 0.08);
+      --accent: #06b6d4;
+      --accent2: #818cf8;
+      --danger: #f43f5e;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --text: #f0f4ff;
+      --muted: #7c8db5;
+      --glass: rgba(13, 18, 33, 0.85);
     }
 
-    const p1 = nodeCoords[pathNodes[currentSegment]];
-    const p2 = nodeCoords[pathNodes[currentSegment + 1]];
-    if (!p1 || !p2) return;
-    
-    const dx = p2.lng - p1.lng;
-    const dy = p2.lat - p1.lat;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    
-    // Constant speed regardless of framerate or segment length
-    const step = (speed * dt) / Math.max(dist, 0.001);
-    progress += step;
+    body.light-mode {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel2: #f1f5f9;
+      --border: rgba(15, 23, 42, 0.1);
+      --accent: #0ea5e9;
+      --accent2: #6366f1;
+      --danger: #e11d48;
+      --success: #059669;
+      --warn: #d97706;
+      --text: #0f172a;
+      --muted: #64748b;
+      --glass: rgba(255, 255, 255, 0.85);
+    }
 
-    if (progress >= 1) {
-      progress = 0;
-      currentSegment++;
-    } else {
-      const lat = p1.lat + dy * progress;
-      const lng = p1.lng + dx * progress;
-      marker.setLatLng([lat, lng]);
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      // Calculate angle
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      const el = marker.getElement()?.querySelector('svg');
-      if (el) {
-        el.style.transform = `rotate(${angle + 90}deg)`;
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    .left {
+      width: 38%;
+      min-width: 370px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .left::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .left::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+
+    .right {
+      flex: 1;
+      position: relative;
+      background: var(--bg);
+      transition: background 0.3s;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(6, 182, 212, 0.06) 0%, transparent 100%);
+      position: relative;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      right: 28px;
+      top: 24px;
+      background: rgba(129, 140, 248, 0.1);
+      border: 1px solid rgba(129, 140, 248, 0.2);
+      color: var(--accent2);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(129, 140, 248, 0.2);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    .logo-text {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #06b6d4, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      backdrop-filter: blur(8px);
+      border: 1px solid;
+    }
+
+    .stat.live {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border-color: rgba(16, 185, 129, 0.3);
+      animation: glow-pulse 2s infinite;
+    }
+
+    .stat.active-s {
+      background: rgba(6, 182, 212, 0.1);
+      color: var(--accent);
+      border-color: rgba(6, 182, 212, 0.2);
+    }
+
+    .stat.risk {
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--danger);
+      border-color: rgba(244, 63, 94, 0.3);
+    }
+
+    .stat.rerouted-s {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    @keyframes glow-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 16px rgba(16, 185, 129, 0.6);
       }
     }
-    const frameId = requestAnimationFrame(frame);
-    animationFrames.push(frameId);
-  }
-  
-  const frameId = requestAnimationFrame(frame);
-  animationFrames.push(frameId);
-}
 
-function startBlinkReroute(paths){
-  stopBlink();
-  edgeLines.forEach(l=>l.setStyle({opacity:0.04}));
-  rerouteLines.forEach(l=>map.removeLayer(l));
-  rerouteLines=[];
-  
-  const pathList = Object.values(paths);
-  if (pathList.length === 0) return;
-  
-  // Pick the most relevant path (first one) to avoid lighting up multiple divergent paths
-  const path = pathList[0];
+    .section {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+    }
 
-  for(let i=0;i<path.length-1;i++){
-    const s=nodeCoords[path[i]], t=nodeCoords[path[i+1]];
-    if(!s||!t) continue;
-    const l=L.polyline([[s.lat,s.lng],[t.lat,t.lng]],{
-      color:'#10b981', weight:5, opacity:1, dashArray:'14 8', smoothFactor:1
-    }).addTo(map);
-    rerouteLines.push(l);
-  }
-  
-  // Start plane animation for this primary path
-  animatePlaneOnPath(path);
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
 
-  let v=true;
-  blinkInterval=setInterval(()=>{
-    v=!v;
-    rerouteLines.forEach(l=>l.setStyle({opacity:v?1:0.12}));
-  }, 600);
-}
+    label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-function stopBlink(){
-  if(blinkInterval){clearInterval(blinkInterval); blinkInterval=null;}
-  rerouteLines.forEach(l=>map.removeLayer(l));
-  rerouteLines=[];
-  
-  // Stop and remove planes
-  animationFrames.forEach(id => cancelAnimationFrame(id));
-  animationFrames = [];
-  planes.forEach(p => map.removeLayer(p));
-  planes = [];
-}
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid rgba(129, 140, 248, 0.15);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border .2s;
+      appearance: none;
+      cursor: pointer;
+    }
 
-function showDisruptionCard(r){
-  lastDisruptResult=r;
-  rerouteExecuted=false;
-  const c=document.getElementById('cards-container');
-  const opts=r.reroute_options||[];
-  const o0=opts[0]||{}, o1=opts[1]||{};
-  let h=`<div class="card card-disruption">
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 5px;
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--success), var(--warn), var(--danger));
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .25s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-disrupt {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
+    }
+
+    .btn-disrupt:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(244, 63, 94, 0.4);
+    }
+
+    .btn-reset {
+      background: rgba(129, 140, 248, 0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+
+    .btn-reset:hover {
+      background: rgba(129, 140, 248, 0.2);
+    }
+
+    .btn-reroute {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-reroute:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .card {
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 14px;
+      animation: slideIn .4s cubic-bezier(.4, 0, .2, 1);
+      backdrop-filter: blur(12px);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-disruption {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(190, 18, 60, 0.08));
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      box-shadow: 0 0 30px rgba(244, 63, 94, 0.08);
+    }
+
+    .card-resolution {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.08);
+    }
+
+    .card-header {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .exposure {
+      font-size: 32px;
+      font-weight: 900;
+      margin: 10px 0;
+      letter-spacing: -1px;
+    }
+
+    .exposure.red {
+      color: var(--danger);
+      text-shadow: 0 0 30px rgba(244, 63, 94, 0.4);
+    }
+
+    .exposure.green {
+      color: var(--success);
+      text-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .detail {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 5px 0;
+      font-weight: 500;
+    }
+
+    .detail strong {
+      color: var(--text);
+    }
+
+    .opts {
+      display: flex;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .opt-card {
+      flex: 1;
+      background: rgba(6, 8, 15, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid rgba(129, 140, 248, 0.1);
+      cursor: pointer;
+      transition: all .25s;
+    }
+
+    body:not(.light-mode) .opt-card {
+      background: rgba(6, 8, 15, 0.6);
+    }
+
+    .opt-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .opt-card h4 {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .opt-card p {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 3px 0;
+      font-weight: 500;
+    }
+
+    .brief-panel {
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(99, 102, 241, 0.06));
+      border: 1px solid rgba(129, 140, 248, 0.2);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+      box-shadow: 0 0 30px rgba(129, 140, 248, 0.05);
+    }
+
+    .brief-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent2);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .brief-text {
+      font-size: 13px;
+      font-style: italic;
+      color: var(--accent2);
+      line-height: 1.7;
+      font-weight: 500;
+    }
+
+    body:not(.light-mode) .brief-text {
+      color: #c7d2fe;
+      font-weight: 400;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--accent2);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, rgba(129, 140, 248, 0.04), transparent);
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .toggle {
+      position: relative;
+      width: 46px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(129, 140, 248, 0.15);
+      border-radius: 12px;
+      transition: .3s;
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 2px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+    }
+
+    .toggle input:checked+.toggle-slider {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+    }
+
+    .toggle input:checked+.toggle-slider:before {
+      transform: translateX(21px);
+    }
+
+    .auto-badge {
+      font-size: 10px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .badge-off {
+      background: rgba(129, 140, 248, 0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+
+    .badge-on {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+    }
+
+    .ws-status {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+      letter-spacing: 0.5px;
+    }
+
+    .ws-connected {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .ws-disconnected {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      animation: glow-pulse-red 1.5s infinite;
+    }
+
+    @keyframes glow-pulse-red {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px rgba(244, 63, 94, 0.2);
+      }
+
+      50% {
+        box-shadow: 0 0 16px rgba(244, 63, 94, 0.5);
+      }
+    }
+
+    #cards-container {
+      padding: 18px 28px;
+    }
+
+    /* Map popups styling */
+    .leaflet-popup-content-wrapper {
+      background: var(--panel) !important;
+      color: var(--text) !important;
+      border-radius: 12px !important;
+      border: 1px solid var(--border) !important;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    body:not(.light-mode) .leaflet-popup-content-wrapper {
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--panel) !important;
+    }
+
+    .leaflet-popup-content {
+      font-family: Inter, sans-serif !important;
+      font-size: 12px !important;
+      margin: 10px 14px !important;
+    }
+
+    /* Plane Animation element */
+    .plane-icon {
+      font-size: 24px;
+      filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.8));
+      transition: transform 0.1s linear;
+      /* Smooth micro-stutters out */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="left">
+      <div class="header">
+        <div class="logo-row">
+          <div class="logo-icon">⚡</div>
+          <div class="logo-text">ChainPulse</div>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">☀️ Light Mode</button>
+        <div class="tagline">Predictive Disruption Intelligence</div>
+        <div class="stats-bar">
+          <span class="stat live">● LIVE</span>
+          <span class="stat active-s" id="stat-active">20 active</span>
+          <span class="stat risk" id="stat-risk">0 at risk</span>
+          <span class="stat rerouted-s" id="stat-rerouted">0 rerouted</span>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span style="font-size:16px">⚡</span>
+        <span class="toggle-label">Auto-Execute</span>
+        <label class="toggle"><input type="checkbox" id="auto-toggle"><span class="toggle-slider"></span></label>
+        <span class="auto-badge badge-off" id="auto-badge">OFF</span>
+      </div>
+      <div class="section">
+        <div class="section-title">Simulate Disruption</div>
+        <label>Target Node</label>
+        <select id="node-select"></select>
+        <label>Event Type</label>
+        <select id="event-select">
+          <option>Cyclone Alert</option>
+          <option>Port Congestion</option>
+          <option>Labour Strike</option>
+          <option>Customs Hold</option>
+          <option>Equipment Failure</option>
+        </select>
+        <label>Severity: <span id="sev-val" style="color:var(--accent);font-weight:800">80%</span></label>
+        <input type="range" id="severity" min="0" max="100" value="80">
+        <div class="btn-row">
+          <button class="btn btn-disrupt" id="btn-disrupt" onclick="triggerDisrupt()">🔴 Trigger Disruption</button>
+          <button class="btn btn-reset" onclick="triggerReset()">↻ Reset</button>
+        </div>
+      </div>
+      <div id="cards-container"></div>
+    </div>
+    <div class="right">
+      <div id="map"></div>
+    </div>
+  </div>
+  <div class="ws-status ws-disconnected" id="ws-status">● CONNECTING</div>
+  <script>
+    // Toggle Theme Logic
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      const btn = document.getElementById('theme-toggle');
+      if (isLight) {
+        btn.innerHTML = '🌙 Dark Mode';
+        if (tileLayer) tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+      } else {
+        btn.innerHTML = '☀️ Light Mode';
+        if (tileLayer) tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+      }
+    }
+
+    const BACKEND = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+      ? 'http://localhost:8080'
+      : 'https://chainpulse-api-68tv.onrender.com'; // 🔴 PASTE YOUR RENDER URL HERE 🔴
+    let map, markersMap = {}, edgeLines = [], rerouteLines = [], planes = [], nodeCoords = {}, lastDisruptResult = null, rerouteExecuted = false, blinkInterval = null, animationFrames = [], ws;
+    const SC = { normal: '#10b981', disrupted: '#f43f5e', at_risk: '#f59e0b', rerouted: '#06b6d4' };
+    const EC = { normal: '#64748b', disrupted: '#f43f5e', at_risk: '#f59e0b', rerouted: '#10b981' };
+
+    map = L.map('map', { zoomControl: true, attributionControl: false }).setView([18, 65], 4);
+    let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18, subdomains: 'abcd' }).addTo(map);
+
+    function createNodeMarker(n) {
+      const c = SC[n.status] || '#10b981', r = 7 + (n.shipment_count || 0) * 1.5;
+      const m = L.circleMarker([n.lat, n.lng], { radius: Math.min(r, 24), fillColor: c, fillOpacity: 0.9, color: '#fff', weight: 2 }).addTo(map);
+      const tt = L.tooltip({ permanent: true, direction: 'bottom', offset: [0, 10] });
+      tt.setContent(`<span style="font-family:Inter;font-size:10px;font-weight:700;background:rgba(6,8,15,0.85);color:#fff;padding:4px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.2)">${n.label}</span>`);
+      m.bindTooltip(tt);
+      m.bindPopup(`<strong style="color:var(--accent)">${n.label}</strong><br>Type: ${n.type}<br>📦 ${n.shipment_count} shipments<br><span style="color:${c}">● ${n.status}</span>`);
+      markersMap[n.id] = m;
+      nodeCoords[n.id] = { lat: n.lat, lng: n.lng };
+    }
+
+    function drawEdges(edges) {
+      edgeLines.forEach(l => map.removeLayer(l));
+      edgeLines = [];
+      edges.forEach(e => {
+        const s = nodeCoords[e.source], t = nodeCoords[e.target];
+        if (!s || !t) return;
+        const c = EC[e.status] || '#64748b';
+        const l = L.polyline([[s.lat, s.lng], [t.lat, t.lng]], {
+          color: c, weight: e.status === 'rerouted' ? 4 : 2.5, opacity: e.status === 'disrupted' ? 0.35 : 0.7,
+          dashArray: e.status === 'disrupted' ? '8 6' : null, smoothFactor: 1
+        }).addTo(map);
+        l._edgeId = e.source + '_' + e.target;
+        edgeLines.push(l);
+      });
+    }
+
+    function updateMarkers(nodes) {
+      nodes.forEach(n => {
+        nodeCoords[n.id] = { lat: n.lat, lng: n.lng };
+        const m = markersMap[n.id];
+        if (!m) { createNodeMarker(n); return; }
+        m.setStyle({ fillColor: SC[n.status] || '#10b981', radius: Math.min(7 + (n.shipment_count || 0) * 1.5, 24) });
+      });
+    }
+
+    function updateStats(sh) {
+      if (!sh) return;
+      const a = sh.filter(s => s.status === 'active').length, r = sh.filter(s => s.status === 'at_risk').length, t = sh.filter(s => s.status === 'rerouted').length;
+      document.getElementById('stat-active').textContent = a + ' active';
+      document.getElementById('stat-risk').textContent = r + ' at risk';
+      document.getElementById('stat-rerouted').textContent = t + ' rerouted';
+    }
+
+    function animatePlaneOnPath(pathNodes) {
+      if (pathNodes.length < 2) return;
+      const planeIcon = L.divIcon({
+        html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#10b981" width="24px" height="24px" style="filter: drop-shadow(0 0 8px #10b981); transition: transform 0.3s ease;"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></svg>`,
+        className: 'plane-icon',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const marker = L.marker([nodeCoords[pathNodes[0]].lat, nodeCoords[pathNodes[0]].lng], { icon: planeIcon, zIndexOffset: 1000 }).addTo(map);
+      planes.push(marker);
+
+      let currentSegment = 0;
+      let progress = 0;
+      const speed = 4.0; // Distance units per second
+      let lastTime = performance.now();
+
+      function frame(time) {
+        let dt = (time - lastTime) / 1000;
+        lastTime = time;
+        if (dt > 0.1) dt = 0.016; // Prevent huge jumps if tab was inactive
+
+        if (currentSegment >= pathNodes.length - 1) {
+          currentSegment = 0;
+          progress = 0;
+          marker.setLatLng([nodeCoords[pathNodes[0]].lat, nodeCoords[pathNodes[0]].lng]);
+        }
+
+        const p1 = nodeCoords[pathNodes[currentSegment]];
+        const p2 = nodeCoords[pathNodes[currentSegment + 1]];
+        if (!p1 || !p2) return;
+
+        const dx = p2.lng - p1.lng;
+        const dy = p2.lat - p1.lat;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Constant speed regardless of framerate or segment length
+        const step = (speed * dt) / Math.max(dist, 0.001);
+        progress += step;
+
+        if (progress >= 1) {
+          progress = 0;
+          currentSegment++;
+        } else {
+          const lat = p1.lat + dy * progress;
+          const lng = p1.lng + dx * progress;
+          marker.setLatLng([lat, lng]);
+
+          // Calculate angle
+          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          const el = marker.getElement()?.querySelector('svg');
+          if (el) {
+            el.style.transform = `rotate(${angle + 90}deg)`;
+          }
+        }
+        const frameId = requestAnimationFrame(frame);
+        animationFrames.push(frameId);
+      }
+
+      const frameId = requestAnimationFrame(frame);
+      animationFrames.push(frameId);
+    }
+
+    function startBlinkReroute(paths) {
+      stopBlink();
+      edgeLines.forEach(l => l.setStyle({ opacity: 0.04 }));
+      rerouteLines.forEach(l => map.removeLayer(l));
+      rerouteLines = [];
+
+      const pathList = Object.values(paths);
+      if (pathList.length === 0) return;
+
+      // Pick the most relevant path (first one) to avoid lighting up multiple divergent paths
+      const path = pathList[0];
+
+      for (let i = 0; i < path.length - 1; i++) {
+        const s = nodeCoords[path[i]], t = nodeCoords[path[i + 1]];
+        if (!s || !t) continue;
+        const l = L.polyline([[s.lat, s.lng], [t.lat, t.lng]], {
+          color: '#10b981', weight: 5, opacity: 1, dashArray: '14 8', smoothFactor: 1
+        }).addTo(map);
+        rerouteLines.push(l);
+      }
+
+      // Start plane animation for this primary path
+      animatePlaneOnPath(path);
+
+      let v = true;
+      blinkInterval = setInterval(() => {
+        v = !v;
+        rerouteLines.forEach(l => l.setStyle({ opacity: v ? 1 : 0.12 }));
+      }, 600);
+    }
+
+    function stopBlink() {
+      if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
+      rerouteLines.forEach(l => map.removeLayer(l));
+      rerouteLines = [];
+
+      // Stop and remove planes
+      animationFrames.forEach(id => cancelAnimationFrame(id));
+      animationFrames = [];
+      planes.forEach(p => map.removeLayer(p));
+      planes = [];
+    }
+
+    function showDisruptionCard(r) {
+      lastDisruptResult = r;
+      rerouteExecuted = false;
+      const c = document.getElementById('cards-container');
+      const opts = r.reroute_options || [];
+      const o0 = opts[0] || {}, o1 = opts[1] || {};
+      let h = `<div class="card card-disruption">
     <div class="card-header">⚠️ DISRUPTION DETECTED</div>
-    <div class="detail"><strong>${r.event_type}</strong> at <strong>${r.node}</strong> — ${(r.severity*100).toFixed(0)}% severity</div>
+    <div class="detail"><strong>${r.event_type}</strong> at <strong>${r.node}</strong> — ${(r.severity * 100).toFixed(0)}% severity</div>
     <div class="detail">Shipments at risk: <strong>${r.affected_shipments.length}</strong></div>
     <div class="exposure red">₹${Number(r.total_exposure_inr).toLocaleString('en-IN')}</div>
     <div class="detail" style="font-size:11px;color:var(--danger)">Total SLA Exposure</div>`;
-  
-  if(opts.length>0){
-    h+=`<div class="opts">`;
-    if(o0.via_node) h+=`<div class="opt-card"><h4>A: Via ${o0.via_node_label}</h4><p>⏱ Saves ${o0.time_saving_hours}h</p><p>💰 +₹${Number(o0.cost_delta).toLocaleString('en-IN')}</p><p>📊 ${(o0.confidence*100).toFixed(0)}%</p></div>`;
-    if(o1.via_node) h+=`<div class="opt-card"><h4>B: Via ${o1.via_node_label}</h4><p>⏱ Saves ${o1.time_saving_hours}h</p><p>💰 +₹${Number(o1.cost_delta).toLocaleString('en-IN')}</p><p>📊 ${(o1.confidence*100).toFixed(0)}%</p></div>`;
-    h+=`</div><div class="btn-row" id="reroute-btns">`;
-    if(o0.via_node) h+=`<button class="btn btn-reroute" onclick="executeReroute(0)">✅ Execute A</button>`;
-    if(o1.via_node) h+=`<button class="btn btn-reroute" onclick="executeReroute(1)">✅ Execute B</button>`;
-    h+=`</div>`;
-  }
-  h+=`</div><div class="brief-panel"><div class="brief-label">✨ Gemini AI Brief</div><div class="brief-text">${r.gemini_brief||'<span class="spinner"></span> Generating...'}</div></div>`;
-  c.innerHTML=h;
-}
 
-function showResolutionCard(r){
-  const c=document.getElementById('cards-container');
-  c.innerHTML+=`<div class="card card-resolution">
-    <div class="card-header">✅ REROUTED${r.auto?' (AUTO)':''}</div>
+      if (opts.length > 0) {
+        h += `<div class="opts">`;
+        if (o0.via_node) h += `<div class="opt-card"><h4>A: Via ${o0.via_node_label}</h4><p>⏱ Saves ${o0.time_saving_hours}h</p><p>💰 +₹${Number(o0.cost_delta).toLocaleString('en-IN')}</p><p>📊 ${(o0.confidence * 100).toFixed(0)}%</p></div>`;
+        if (o1.via_node) h += `<div class="opt-card"><h4>B: Via ${o1.via_node_label}</h4><p>⏱ Saves ${o1.time_saving_hours}h</p><p>💰 +₹${Number(o1.cost_delta).toLocaleString('en-IN')}</p><p>📊 ${(o1.confidence * 100).toFixed(0)}%</p></div>`;
+        h += `</div><div class="btn-row" id="reroute-btns">`;
+        if (o0.via_node) h += `<button class="btn btn-reroute" onclick="executeReroute(0)">✅ Execute A</button>`;
+        if (o1.via_node) h += `<button class="btn btn-reroute" onclick="executeReroute(1)">✅ Execute B</button>`;
+        h += `</div>`;
+      }
+      h += `</div><div class="brief-panel"><div class="brief-label">✨ Gemini AI Brief</div><div class="brief-text">${r.gemini_brief || '<span class="spinner"></span> Generating...'}</div></div>`;
+      c.innerHTML = h;
+    }
+
+    function showResolutionCard(r) {
+      const c = document.getElementById('cards-container');
+      c.innerHTML += `<div class="card card-resolution">
+    <div class="card-header">✅ REROUTED${r.auto ? ' (AUTO)' : ''}</div>
     <div class="detail">Shipments rerouted: <strong>${r.rerouted_count}</strong></div>
     <div class="detail">Time saved: <strong>${r.total_time_saved_hours}h</strong></div>
     <div class="exposure green">₹${Number(r.net_saving_inr).toLocaleString('en-IN')}</div>
     <div class="detail" style="color:var(--success);font-size:11px">Net Saving</div>
   </div>`;
-  const b=document.getElementById('reroute-btns');
-  if(b) b.remove();
-}
-
-async function loadGraph(){
-  try{
-    const res=await fetch(BACKEND+'/graph');
-    const st=await res.json();
-    const sel=document.getElementById('node-select');
-    sel.innerHTML='';
-    (st.nodes||[]).forEach(n=>{
-      const o=document.createElement('option');
-      o.value=n.id; o.textContent=n.label;
-      if(n.id==='chennai_port') o.selected=true;
-      sel.appendChild(o);
-      createNodeMarker(n);
-    });
-    drawEdges(st.edges||[]);
-    updateStats(st.shipments);
-    const pts=Object.values(nodeCoords).map(c=>[c.lat,c.lng]);
-    if(pts.length) map.fitBounds(pts,{padding:[40,40]});
-  }catch(e){
-    document.getElementById('cards-container').innerHTML='<div class="card card-disruption"><div class="card-header">⚠️ Backend Offline</div><div class="detail">Run: <code style="color:var(--accent)">cd backend && py -3.10 -m uvicorn main:app --port 8080</code></div></div>';
-  }
-}
-
-async function triggerDisrupt(){
-  const node=document.getElementById('node-select').value, et=document.getElementById('event-select').value, sev=document.getElementById('severity').value/100;
-  document.getElementById('btn-disrupt').disabled=true;
-  document.getElementById('btn-disrupt').textContent='⏳ PROCESSING...';
-  try{
-    const res=await fetch(BACKEND+'/disrupt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({node,severity:sev,event_type:et})});
-    const d=await res.json();
-    showDisruptionCard(d);
-    if(document.getElementById('auto-toggle').checked && d.affected_shipments){
-      const ids=d.affected_shipments.filter(a=>a.reroute_options.length>0 && a.reroute_options[0].cost_delta<50000 && a.shipment.criticality==='high' && a.reroute_options[0].confidence>0.7).map(a=>a.shipment.id);
-      if(ids.length>0) setTimeout(()=>executeReroute(0,ids,true),1500);
+      const b = document.getElementById('reroute-btns');
+      if (b) b.remove();
     }
-  }catch(e){
-    alert('Error: '+e.message);
-  }
-  document.getElementById('btn-disrupt').disabled=false;
-  document.getElementById('btn-disrupt').textContent='🔴 Trigger Disruption';
-}
 
-async function executeReroute(idx,ids,auto){
-  if(rerouteExecuted && !ids) return;
-  const shipIds=ids||(lastDisruptResult?lastDisruptResult.affected_shipments.map(a=>a.shipment.id):[]);
-  if(!shipIds.length) return;
-  try{
-    const res=await fetch(BACKEND+'/reroute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({shipment_ids:shipIds,option_index:idx,auto:!!auto})});
-    const d=await res.json();
-    d.auto=!!auto;
-    showResolutionCard(d);
-    if(d.new_paths) startBlinkReroute(d.new_paths);
-    rerouteExecuted=true;
-  }catch(e){
-    alert('Reroute error: '+e.message);
-  }
-}
-
-async function triggerReset(){
-  try{
-    await fetch(BACKEND+'/reset',{method:'POST'});
-    document.getElementById('cards-container').innerHTML='';
-    lastDisruptResult=null;
-    rerouteExecuted=false;
-    stopBlink();
-    Object.values(markersMap).forEach(m=>map.removeLayer(m));
-    markersMap={};
-    edgeLines.forEach(l=>map.removeLayer(l));
-    edgeLines=[];
-    nodeCoords={};
-    loadGraph();
-  }catch(e){
-    alert('Reset error: '+e.message);
-  }
-}
-
-function connectWS(){
-  const p=BACKEND.startsWith('https')?'wss':'ws', h=BACKEND.replace(/^https?:\/\//,'');
-  ws=new WebSocket(p+'://'+h+'/ws');
-  const el=document.getElementById('ws-status');
-  ws.onopen=()=>{el.className='ws-status ws-connected'; el.textContent='● CONNECTED';};
-  ws.onclose=()=>{el.className='ws-status ws-disconnected'; el.textContent='● DISCONNECTED'; setTimeout(connectWS,3000);};
-  ws.onerror=()=>ws.close();
-  ws.onmessage=evt=>{
-    if(evt.data==='pong') return;
-    try{
-      const msg=JSON.parse(evt.data);
-      if(msg.type==='graph_update' && msg.data){
-        updateMarkers(msg.data.nodes||[]);
-        if(!rerouteExecuted) drawEdges(msg.data.edges||[]);
-        updateStats(msg.data.shipments);
+    async function loadGraph() {
+      try {
+        const res = await fetch(BACKEND + '/graph');
+        const st = await res.json();
+        const sel = document.getElementById('node-select');
+        sel.innerHTML = '';
+        (st.nodes || []).forEach(n => {
+          const o = document.createElement('option');
+          o.value = n.id; o.textContent = n.label;
+          if (n.id === 'chennai_port') o.selected = true;
+          sel.appendChild(o);
+          createNodeMarker(n);
+        });
+        drawEdges(st.edges || []);
+        updateStats(st.shipments);
+        const pts = Object.values(nodeCoords).map(c => [c.lat, c.lng]);
+        if (pts.length) map.fitBounds(pts, { padding: [40, 40] });
+      } catch (e) {
+        document.getElementById('cards-container').innerHTML = '<div class="card card-disruption"><div class="card-header">⚠️ Backend Offline</div><div class="detail">Run: <code style="color:var(--accent)">cd backend && py -3.10 -m uvicorn main:app --port 8080</code></div></div>';
       }
-    }catch(e){}
-  };
-  setInterval(()=>{if(ws && ws.readyState===1) ws.send('ping');},25000);
-}
+    }
 
-document.getElementById('severity').addEventListener('input',e=>{document.getElementById('sev-val').textContent=e.target.value+'%';});
-document.getElementById('auto-toggle').addEventListener('change',e=>{
-  const b=document.getElementById('auto-badge');
-  b.textContent=e.target.checked?'ON':'OFF';
-  b.className='auto-badge '+(e.target.checked?'badge-on':'badge-off');
-});
+    async function triggerDisrupt() {
+      const node = document.getElementById('node-select').value, et = document.getElementById('event-select').value, sev = document.getElementById('severity').value / 100;
+      document.getElementById('btn-disrupt').disabled = true;
+      document.getElementById('btn-disrupt').textContent = '⏳ PROCESSING...';
+      try {
+        const res = await fetch(BACKEND + '/disrupt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ node, severity: sev, event_type: et }) });
+        const d = await res.json();
+        showDisruptionCard(d);
+        if (document.getElementById('auto-toggle').checked && d.affected_shipments) {
+          const ids = d.affected_shipments.filter(a => a.reroute_options.length > 0 && a.reroute_options[0].cost_delta < 50000 && a.shipment.criticality === 'high' && a.reroute_options[0].confidence > 0.7).map(a => a.shipment.id);
+          if (ids.length > 0) setTimeout(() => executeReroute(0, ids, true), 1500);
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+      document.getElementById('btn-disrupt').disabled = false;
+      document.getElementById('btn-disrupt').textContent = '🔴 Trigger Disruption';
+    }
 
-loadGraph();
-connectWS();
-</script>
+    async function executeReroute(idx, ids, auto) {
+      if (rerouteExecuted && !ids) return;
+      const shipIds = ids || (lastDisruptResult ? lastDisruptResult.affected_shipments.map(a => a.shipment.id) : []);
+      if (!shipIds.length) return;
+      try {
+        const res = await fetch(BACKEND + '/reroute', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ shipment_ids: shipIds, option_index: idx, auto: !!auto }) });
+        const d = await res.json();
+        d.auto = !!auto;
+        showResolutionCard(d);
+        if (d.new_paths) startBlinkReroute(d.new_paths);
+        rerouteExecuted = true;
+      } catch (e) {
+        alert('Reroute error: ' + e.message);
+      }
+    }
+
+    async function triggerReset() {
+      try {
+        await fetch(BACKEND + '/reset', { method: 'POST' });
+        document.getElementById('cards-container').innerHTML = '';
+        lastDisruptResult = null;
+        rerouteExecuted = false;
+        stopBlink();
+        Object.values(markersMap).forEach(m => map.removeLayer(m));
+        markersMap = {};
+        edgeLines.forEach(l => map.removeLayer(l));
+        edgeLines = [];
+        nodeCoords = {};
+        loadGraph();
+      } catch (e) {
+        alert('Reset error: ' + e.message);
+      }
+    }
+
+    function connectWS() {
+      const p = BACKEND.startsWith('https') ? 'wss' : 'ws', h = BACKEND.replace(/^https?:\/\//, '');
+      ws = new WebSocket(p + '://' + h + '/ws');
+      const el = document.getElementById('ws-status');
+      ws.onopen = () => { el.className = 'ws-status ws-connected'; el.textContent = '● CONNECTED'; };
+      ws.onclose = () => { el.className = 'ws-status ws-disconnected'; el.textContent = '● DISCONNECTED'; setTimeout(connectWS, 3000); };
+      ws.onerror = () => ws.close();
+      ws.onmessage = evt => {
+        if (evt.data === 'pong') return;
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.type === 'graph_update' && msg.data) {
+            updateMarkers(msg.data.nodes || []);
+            if (!rerouteExecuted) drawEdges(msg.data.edges || []);
+            updateStats(msg.data.shipments);
+          }
+        } catch (e) { }
+      };
+      setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 25000);
+    }
+
+    document.getElementById('severity').addEventListener('input', e => { document.getElementById('sev-val').textContent = e.target.value + '%'; });
+    document.getElementById('auto-toggle').addEventListener('change', e => {
+      const b = document.getElementById('auto-badge');
+      b.textContent = e.target.checked ? 'ON' : 'OFF';
+      b.className = 'auto-badge ' + (e.target.checked ? 'badge-on' : 'badge-off');
+    });
+
+    loadGraph();
+    connectWS();
+  </script>
 </body>
+
 </html>
