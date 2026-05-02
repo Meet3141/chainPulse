@@ -90,6 +90,7 @@ async def _broadcast_state(alert: dict | None = None):
 # ── Endpoints ────────────────────────────────────────────────
 
 @app.get("/health")
+@app.head("/health")
 async def health():
     c = engine.get_counts()
     return {
@@ -98,6 +99,11 @@ async def health():
         "edges": c["edges"],
         "shipments": c["shipments"],
     }
+
+@app.get("/")
+@app.head("/")
+async def root():
+    return {"status": "ChainPulse API is running"}
 
 
 @app.get("/graph")
