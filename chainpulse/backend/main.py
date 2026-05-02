@@ -6,6 +6,9 @@ All endpoints, WebSocket manager, CORS configuration.
 import asyncio
 import json
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
