@@ -22,8 +22,14 @@ def init_firestore():
 
         cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
         project_id = os.environ.get("PROJECT_ID", "")
+        cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON", "")
 
-        if cred_path and os.path.exists(cred_path):
+        if cred_json:
+            import json
+            cred_dict = json.loads(cred_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred, {"projectId": project_id})
+        elif cred_path and os.path.exists(cred_path):
             cred = credentials.Certificate(cred_path)
             firebase_admin.initialize_app(cred, {"projectId": project_id})
         elif project_id:
