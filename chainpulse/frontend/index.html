@@ -701,9 +701,7 @@
       }
     }
 
-    const BACKEND = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-      ? 'http://localhost:8080'  // Local development
-      : 'https://chainpulse-api-68tv.onrender.com';  // ✅ Production (Render)
+    const BACKEND = 'https://chainpulse-api-68tv.onrender.com';  // ✅ Production (Render)
     let map, markersMap = {}, edgeLines = [], rerouteLines = [], planes = [], nodeCoords = {}, lastDisruptResult = null, rerouteExecuted = false, blinkInterval = null, animationFrames = [], ws;
     const SC = { normal: '#10b981', disrupted: '#f43f5e', at_risk: '#f59e0b', rerouted: '#06b6d4' };
     const EC = { normal: '#64748b', disrupted: '#f43f5e', at_risk: '#f59e0b', rerouted: '#10b981' };
@@ -919,7 +917,7 @@
         const pts = Object.values(nodeCoords).map(c => [c.lat, c.lng]);
         if (pts.length) map.fitBounds(pts, { padding: [40, 40] });
       } catch (e) {
-        document.getElementById('cards-container').innerHTML = '<div class="card card-disruption"><div class="card-header">⚠️ Backend Offline</div><div class="detail">Run: <code style="color:var(--accent)">cd backend && py -3.10 -m uvicorn main:app --port 8080</code></div></div>';
+        document.getElementById('cards-container').innerHTML = '<div class="card card-disruption"><div class="card-header">⚠️ Backend Offline</div><div class="detail">Run: <code style="color:var(--accent)">cd backend && py -m uvicorn main:app --port 8080</code></div></div>';
       }
     }
 
